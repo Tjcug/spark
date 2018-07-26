@@ -3,13 +3,9 @@ package org.apache.spark;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.PairFunction;
 import scala.Tuple2;
-
-import java.util.Arrays;
-import java.util.Iterator;
 
 /**
  * locate org.apache.spark
@@ -17,7 +13,7 @@ import java.util.Iterator;
  * 删除wordCountResult路径
  * hdfs dfs -rm -r hdfs://ubuntu2:9000/user/root/sparkMigrate/wordCountResult
  * 提交jar包
- * spark-submit --class org.apache.spark.TextFileWordCount --master spark://ubuntu2:7077 sparkMigrateAnalysis-2.3.3-SNAPSHOT.jar /user/root/sparkMigrate/data /user/root/sparkMigrate/wordCountResult
+ * spark-submit --class org.apache.spark.TextFileWordCount --master spark://ubuntu2:7077 sparkMigrateAnalysis-2.3.3-SNAPSHOT.jar /user/root/sparkMigrate/data/resultTweets /user/root/sparkMigrate/wordCountResult
  */
 public class TextFileWordCount {
     public static void main(String[] args) {
@@ -29,14 +25,8 @@ public class TextFileWordCount {
         JavaSparkContext sc=new JavaSparkContext(conf);
 
         JavaRDD<String> textFileRDD = sc.textFile(textFile);
-        JavaRDD<String> wordsRDD = textFileRDD.flatMap(new FlatMapFunction<String, String>() {
-            @Override
-            public Iterator<String> call(String s) throws Exception {
-                String[] split = s.split(" ");
-                return Arrays.asList(split).iterator();
-            }
-        });
-        JavaPairRDD<String, Integer> wordsPairRDD = wordsRDD.mapToPair(new PairFunction<String, String, Integer>() {
+
+        JavaPairRDD<String, Integer> wordsPairRDD = textFileRDD.mapToPair(new PairFunction<String, String, Integer>() {
             @Override
             public Tuple2<String, Integer> call(String s) throws Exception {
                 return new Tuple2<>(s, 1);
@@ -51,7 +41,6 @@ public class TextFileWordCount {
         });
 
         wordcountRDD.saveAsTextFile(outputFile);
-
         sc.close();
     }
 }
